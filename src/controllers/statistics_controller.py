@@ -27,14 +27,3 @@ def table_count(table_name):
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Internal Server Error"}), 500
-
-
-
-@stats_blueprint.route("/api/v1/stats/get_interactions/<choose_classifiers>", methods=["GET"])
-@auth.login_required
-def get_interactions(choose_classifiers):
-    stats_repo = get_statistics_repository(current_app.config)
-    if stats_repo.check_table_name(choose_classifiers):
-        row = stats_repo.get_interaction_count(choose_classifiers)
-        return jsonify({"message": f"{choose_classifiers}", "rows": row}), 200
-    return jsonify({"message": f"Classfiers {choose_classifiers} not found"}), 404
