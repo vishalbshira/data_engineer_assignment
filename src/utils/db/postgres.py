@@ -1,12 +1,18 @@
 from typing import List, Optional
 
 import psycopg2
+import psycopg2.pool
 import psycopg2.extras
 
 
 class QueryRunner:
     def __init__(self, config: dict):
         self.db_config = self._config_to_postgres_config(config)
+        self.connection_pool = psycopg2.pool.SimpleConnectionPool(
+            minconn=1,  # minimum number of connections
+            maxconn=200,  # maximum number of connections in the pool
+            **self.db_config # pass the database connection details
+        )
 
     def _config_to_postgres_config(self, config: dict) -> dict:
         return dict(
@@ -20,12 +26,20 @@ class QueryRunner:
     def _get_connection(
         self, return_dict: bool = True
     ) -> psycopg2.extensions.connection:
-        # Potential improvement: use pools
-        cursor_factory = psycopg2.extras.RealDictCursor if return_dict else None
-        return psycopg2.connect(
-            **self.db_config,
-            cursor_factory=cursor_factory,
-        )
+        # Get a connection from the pool
+        conn = self.connection_pool.getconn()
+        if return_dict:
+            # Set cursor factory for dict-like rows
+            conn.cursor_factory = psycopg2.extras.RealDictCursor
+        return conn
+    
+    def _put_connection(self, conn: psycopg2.extensions.connection):
+        # return connection to the pool
+        self.connection_pool.putconn(conn)
+
+    def close_pool(self):
+        # close all connections in the pool
+        self.connection_pool.closeall()
 
     def execute_query(
         self,
@@ -34,15 +48,28 @@ class QueryRunner:
         fetch_one: bool = False,
         return_dict: bool = True,
     ):
-        conn = self._get_connection(return_dict=return_dict)
+        conn = None
         try:
-            # This context manager only closes the transaction, not the connection
-            with conn:
-                with conn.cursor() as cur:
-                    cur.execute(query, params)
-                    return cur.fetchone() if fetch_one else cur.fetchall()
+            # create connection
+            conn = self._get_connection(return_dict=return_dict)
+        
+            with conn.cursor() as cur:
+                cur.execute(query, params)
+                result = cur.fetchone() if fetch_one else cur.fetchall()
+        
+            # commit only when transaction is completed
+            conn.commit()
+            return result
+        
+        except Exception as e:
+            # rollback when transactions fails
+            if conn:
+                conn.rollback()
+            raise e
+        
         finally:
-            conn.close()
+            if conn:
+                self._put_connection(conn)
 
     def execute_update(
         self,
@@ -80,7 +107,7 @@ class QueryRunner:
                 conn.commit()
                 return rowcount
         finally:
-            conn.close()
+            self._put_connection(conn)
 
     def execute_update_many(
         self,
@@ -120,4 +147,4 @@ class QueryRunner:
                 conn.commit()
                 return rowcount
         finally:
-            conn.close()
+            self._put_connection(conn)

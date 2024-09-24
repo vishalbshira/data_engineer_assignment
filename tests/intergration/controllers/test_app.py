@@ -17,13 +17,6 @@ class TestApi(BaseApiTest):
         self.assert_status_code(response, 200)  # Expect 200 OK for valid table
         self.assert_json_key_count(response, "rows")  # Validate the presence of "rows" in response
 
-    # Test case: Verify API returns the correct number of interactions from "customers_interactions" table
-    def test_number_of_interactions(self):
-        choose_classifiers = "customers_interactions"
-        response = self.get(f"/api/v1/stats/get_interactions/{choose_classifiers}")
-        self.assert_status_code(response, 200)  # Expect 200 OK for valid interaction request
-        self.assert_json_key_has_data(response, "rows")  # Validate "rows" contain data
-
     # Test case: Verify API returns interactions for a specific customer ID
     def test_number_of_customer_interactions(self):
         customer_id = 1

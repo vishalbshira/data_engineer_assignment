@@ -2,18 +2,18 @@ import os
 
 
 class Config:
-    DB_NAME = "business"
-    DB_USER = "postgres"
-    DB_HOST = "localhost"
-    DB_PASSWORD = "thepassword"
-    DB_ADMIN_USER = "postgres"
-    DB_ADMIN_PASSWORD = "thepassword"
-    DB_PORT = 5432
-    ENV = "dev"
+    DB_NAME = os.getenv("DB_NAME", "business")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "thepassword")
+    DB_ADMIN_USER = os.getenv("DB_ADMIN_USER", "postgres")
+    DB_ADMIN_PASSWORD = os.getenv("DB_ADMIN_PASSWORD", "thepassword")
+    DB_PORT = int(os.getenv("DB_PORT", 5432))
+    ENV = os.getenv("ENV", "dev")
 
 
 class TestConfig(Config):
-    DB_HOST = "business-db"
+    DB_HOST = os.getenv("TEST_DB_HOST", "business-db")
 
 
 def load_config(testing: bool):
