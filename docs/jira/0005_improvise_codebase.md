@@ -1,5 +1,7 @@
 Title: Improve Codebase by Adding Connection Pool and Fixing Transaction Management
 
+#### Decouple Specific Repository Classes from the Factory Module
+- Modify the factory methods to return an instance based on configuration or parameters, without hardcoding repository class names.
 #### Add Connection Pool
 - Implement a connection pool using psycopg2.pool.SimpleConnectionPool or an equivalent method.
 - Ensure that connections are returned to the pool after use to prevent leaks.
@@ -9,5 +11,3 @@ Title: Improve Codebase by Adding Connection Pool and Fixing Transaction Managem
 #### Manage Configuration Secrets:
 - Review current configuration management and identify sensitive information (e.g., database passwords).
 - Implement a secure method for managing configuration secrets, such as using environment variables or a secrets management tool (e.g., Azure Key Vaults).
-
-

@@ -1,6 +1,6 @@
 from flask import Blueprint, current_app, jsonify
 from werkzeug.exceptions import BadRequest
-from ..factory import get_customer_repository
+from ..factory import get_repository_factory
 from .auth import auth
 
 
@@ -18,7 +18,8 @@ def get_customer_interactions(customer_id):
         list: customer_id, number of interactions per channel
     """
     try:
-        stats_repo = get_customer_repository(current_app.config)
+        repository_factory = get_repository_factory(current_app.config)
+        stats_repo = repository_factory.create_customer_repository()
         if customer_id.isdigit() and stats_repo.check_customer_exist(customer_id):
             rows = stats_repo.get_customer_interaction_count(customer_id)
             return jsonify({
